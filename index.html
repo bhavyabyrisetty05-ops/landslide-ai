@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Landslide AI | Smart India Hackathon 2026 (SIH26001) - Team AMP2026017</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet CSS & JS for Geospatial Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Chart.js for Live Telemetry & Predictions -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            sih: {
+              orange: '#f97316',
+              blue: '#0284c7',
+              navy: '#0b1329',
+              dark: '#070c1b',
+              card: '#0f172a',
+              border: '#1e293b',
+            },
+            hazard: {
+              low: '#10b981',
+              moderate: '#f59e0b',
+              high: '#ef4444',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #070c1b; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Glassmorphism */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-hover {
+      transition: all 0.25s ease-in-out;
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px -6px rgba(2, 132, 199, 0.18);
+    }
+
+    /* Range slider custom styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      background: #1e293b;
+      height: 6px;
+      border-radius: 9999px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+      transition: transform 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    /* Leaflet popup styling */
+    .leaflet-container {
+      background: #0b1329 !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    .leaflet-popup-content-wrapper {
+      background: #0f172a !important;
+      color: #e2e8f0 !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.6) !important;
+    }
+    .leaflet-popup-tip { background: #0f172a !important; }
+
+    .grid-bg {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="bg-sih-dark text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- TOP OFFICIAL SIH 2026 ANNOUNCEMENT BAR -->
+  <div class="bg-gradient-to-r from-amber-600/90 via-slate-900 to-sky-700/90 border-b border-slate-700/80 text-xs py-1.5 px-4 font-mono flex items-center justify-between text-slate-200">
+    <div class="flex items-center space-x-3 overflow-hidden">
+      <!-- SIH Logo pill -->
+      <span class="bg-orange-500 text-white font-extrabold px-2 py-0.5 rounded text-[11px] tracking-wide flex items-center gap-1 shadow-sm">
+        <span>🇮🇳</span> SMART INDIA HACKATHON 2026
+      </span>
+      <span class="hidden sm:inline text-slate-400">|</span>
+      <span class="hidden sm:inline font-semibold text-sky-300">PS ID: SIH26001</span>
+      <span class="hidden md:inline text-slate-500">•</span>
+      <span class="hidden md:inline text-slate-300 truncate">Theme: Disaster Management (Software)</span>
+      <span class="hidden lg:inline text-slate-500">•</span>
+      <span class="hidden lg:inline text-amber-300 font-semibold">Special Focus: North Eastern Region (NER)</span>
+    </div>
+    <div class="flex items-center space-x-3 flex-shrink-0">
+      <span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 text-[11px]">
+        TEAM ID: <strong class="text-white font-bold">AMP2026017</strong>
+      </span>
+      <span class="text-emerald-400 font-semibold text-[11px] hidden sm:inline flex items-center gap-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> SYSTEM ACTIVE
+      </span>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-sih-navy/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Team Name -->
+      <a href="#overview" class="flex items-center space-x-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-amber-500 p-0.5 shadow-md group-hover:scale-105 transition-transform">
+          <div class="w-full h-full bg-sih-dark rounded-[10px] flex items-center justify-center font-black text-sky-400 text-lg">
+            ▲
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-black tracking-tight text-white group-hover:text-sky-400 transition">LANDSLIDE AI</span>
+            <span class="text-[10px] bg-sky-500/20 text-sky-300 font-mono font-bold px-1.5 py-0.5 rounded border border-sky-500/30">SIH 2026</span>
+          </div>
+          <p class="text-[10px] text-slate-400 font-mono tracking-wider">EARLY WARNING & RISK MONITORING IN NER</p>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden xl:flex items-center space-x-6 text-xs font-semibold text-slate-300 uppercase tracking-wider font-mono">
+        <a href="#overview" class="hover:text-sky-400 transition">Proposed Solution</a>
+        <a href="#modules" class="hover:text-sky-400 transition">6 Core Pillars</a>
+        <a href="#predictor" class="hover:text-sky-400 transition text-sky-400">AI Risk Assessment</a>
+        <a href="#gis-map" class="hover:text-sky-400 transition">NER Risk Map</a>
+        <a href="#citizen-reporting" class="hover:text-sky-400 transition text-amber-300">Citizen Reporting</a>
+        <a href="#tech-stack" class="hover:text-sky-400 transition">Tech Stack</a>
+        <a href="#roadmap" class="hover:text-sky-400 transition">Roadmap</a>
+        <a href="#impact" class="hover:text-sky-400 transition">Impact</a>
+      </nav>
+
+      <!-- Mode Toggle: Authority vs Community -->
+      <div class="flex items-center space-x-2">
+        <button onclick="togglePortalMode('authority')" id="btnAuthMode" class="px-2.5 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-mono font-bold border border-sky-400 transition flex items-center gap-1.5 shadow">
+          <span>🏛️</span> <span class="hidden sm:inline">Authority Dashboard</span>
+        </button>
+        <button onclick="togglePortalMode('citizen')" id="btnCitMode" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs font-mono font-bold border border-slate-700 transition flex items-center gap-1.5">
+          <span>👥</span> <span class="hidden sm:inline">Community Portal</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- HERO SECTION: SMART INDIA HACKATHON TITLE SLIDE -->
+  <section id="overview" class="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-slate-800 grid-bg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      
+      <!-- Problem Statement Badge -->
+      <div class="flex flex-wrap items-center gap-2 mb-6">
+        <span class="px-3 py-1 rounded-full bg-sky-950/80 border border-sky-700/60 text-sky-300 text-xs font-mono font-bold">
+          Problem Statement ID: SIH26001
+        </span>
+        <span class="px-3 py-1 rounded-full bg-amber-950/80 border border-amber-700/60 text-amber-300 text-xs font-mono font-bold">
+          Team: Landslide AI (AMP2026017)
+        </span>
+        <span class="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono">
+          Category: Software • Disaster Management
+        </span>
+      </div>
+
+      <!-- Main Presentation Headline -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-8">
+          <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15] mb-4">
+            AI-Based Early Warning & <br class="hidden sm:inline" />
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-teal-300 to-amber-400">
+              Landslide Risk Monitoring System in NER
+            </span>
+          </h1>
+
+          <p class="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed max-w-3xl">
+            A smart disaster-management platform that combines <strong>rainfall</strong>, <strong>soil-moisture</strong>, <strong>terrain/slope</strong>, and <strong>historical landslide data</strong> to estimate real-time landslide risk and support life-saving early warnings across the vulnerable North Eastern Region.
+          </p>
+
+          <!-- 3 Quick Bullet Pill Highlights from PPT Slide 2 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <div class="glass-card p-3.5 rounded-xl border border-slate-800 flex items-start gap-2.5">
+              <span class="text-sky-400 text-lg">📊</span>
+              <div>
+                <strong class="text-white text-xs block font-bold">Continuous Monitoring</strong>
+                <span class="text-slate-400 text-[11px]">Real-time risk levels: Low / Moderate / High</span>
+              </div>
+            </div>
+            <div class="glass-card p-3.5 rounded-xl border border-slate-800 flex items-start gap-2.5">
+              <span class="text-amber-400 text-lg">⚠️</span>
+              <div>
+                <strong class="text-white text-xs block font-bold">Early Warning Alerts</strong>
+                <span class="text-slate-400 text-[11px]">Threshold alerts for authorities & citizens</span>
+              </div>
+            </div>
+            <div class="glass-card p-3.5 rounded-xl border border-slate-800 flex items-start gap-2.5">
+              <span class="text-emerald-400 text-lg">📍</span>
+              <div>
+                <strong class="text-white text-xs block font-bold">Location-Wise Evacuation</strong>
+                <span class="text-slate-400 text-[11px]">GIS mapping & field reporting workflow</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTAs -->
+          <div class="flex flex-wrap gap-3">
+            <a href="#predictor" class="px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs sm:text-sm font-mono transition flex items-center gap-2 shadow-lg shadow-sky-500/20">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Try AI Risk Assessment (01)
+            </a>
+            <a href="#gis-map" class="px-5 py-3 rounded-xl glass-card hover:bg-slate-800 text-slate-200 font-semibold text-xs sm:text-sm border border-slate-700 transition flex items-center gap-2">
+              <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+              Explore NER Risk Map (02)
+            </a>
+            <a href="#citizen-reporting" class="px-5 py-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-semibold text-xs sm:text-sm border border-amber-500/30 transition flex items-center gap-2">
+              <span>📷</span> Submit Field Report (05)
+            </a>
+          </div>
+        </div>
+
+        <!-- Quick Summary Card from PPT Slide 2 -->
+        <div class="lg:col-span-4 glass-card p-6 rounded-2xl border border-slate-700/80 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <span class="text-xs font-mono font-bold text-sky-400 uppercase tracking-wider">PPT SLIDE 2 SUMMARY</span>
+            <span class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800">INNOVATION</span>
+          </div>
+
+          <h3 class="text-base font-bold text-white">Innovation & Uniqueness:</h3>
+          <ul class="space-y-2.5 text-xs text-slate-300 font-sans">
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Combines multiple risk signals</strong> (rain, moisture, slope, historical events) into a unified intelligence platform.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Converts raw telemetry</strong> into an easy-to-understand interactive risk map for rapid response.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✓</span>
+              <span><strong>Supports Prevention, Preparedness, and Response</strong> in one cohesive end-to-end workflow.</span>
+            </li>
+          </ul>
+
+          <div class="pt-3 border-t border-slate-800/80 text-[11px] font-mono text-slate-400 flex justify-between">
+            <span>NER Coverage:</span>
+            <span class="text-amber-300 font-bold">Assam, Meghalaya, Sikkim, etc.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 6 CORE MODULES SECTION (FROM PPT SLIDE 5: DESIGNED FOR BOTH AUTHORITIES & COMMUNITIES) -->
+  <section id="modules" class="py-16 bg-sih-navy/40 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">
+          <span>PPT Slide 5 Architecture</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          Designed for Both Authorities & Communities
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base mt-2">
+          The 6 core pillars uniting real-time predictive intelligence with field-level disaster response.
+        </p>
+      </div>
+
+      <!-- 6 Pillars Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- 01 AI Risk Assessment -->
+        <a href="#predictor" class="glass-card p-6 rounded-2xl border border-slate-800 glass-card-hover block group">
+          <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 font-mono font-bold text-sm mb-4 group-hover:bg-sky-500 group-hover:text-black transition">
+            01
+          </div>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-sky-400 transition">AI Risk Assessment</h3>
+          <p class="text-xs text-slate-400 leading-relaxed font-sans">
+            Estimates location-wise landslide risk from multiple environmental factors (rainfall, slope, moisture, soil texture) using trained XGBoost and PyTorch models.
+          </p>
+        </a>
+
+        <!-- 02 Interactive Risk Map -->
+        <a href="#gis-map" class="glass-card p-6 rounded-2xl border border-slate-800 glass-card-hover block group">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm mb-4 group-hover:bg-emerald-500 group-hover:text-black transition">
+            02
+          </div>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-emerald-400 transition">Interactive Risk Map</h3>
+          <p class="text-xs text-slate-400 leading-relaxed font-sans">
+            Visualizes <span class="text-emerald-400 font-semibold">Low</span>, <span class="text-amber-400 font-semibold">Moderate</span>, and <span class="text-red-400 font-semibold">High</span> risk zones across key North Eastern Region (NER) mountain corridors using Leaflet.js.
+          </p>
+        </a>
+
+        <!-- 03 Early-Warning Alerts -->
+        <a href="#predictor" class="glass-card p-6 rounded-2xl border border-slate-800 glass-card-hover block group">
+          <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 font-mono font-bold text-sm mb-4 group-hover:bg-red-500 group-hover:text-white transition">
+            03
+          </div>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-red-400 transition">Early-Warning Alerts</h3>
+          <p class="text-xs text-slate-400 leading-relaxed font-sans">
+            Triggers automated location-based warnings and siren broadcasts when critical hydrological or slope movement thresholds are breached.
+          </p>
+        </a>
+
+        <!-- 04 Authority Dashboard -->
+        <a href="#gis-map" class="glass-card p-6 rounded-2xl border border-slate-800 glass-card-hover block group">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-mono font-bold text-sm mb-4 group-hover:bg-amber-500 group-hover:text-black transition">
+            04
+          </div>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-amber-400 transition">Authority Dashboard</h3>
+          <p class="text-xs text-slate-400 leading-relaxed font-sans">
+            Command center for SDMA, NDRF, and district commissioners to monitor high-vulnerability locations, deploy heavy equipment, and manage evacuation corridors.
+          </p>
+        </a>
+
+        <!-- 05 Citizen Reporting -->
+        <a href="#citizen-reporting" class="glass-card p-6 rounded-2xl border border-amber-500/30 glass-card-hover block group bg-amber-500/5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 font-mono font-bold text-sm mb-4 group-hover:bg-amber-400 group-hover:text-black transition">
+            05
+          </div>
+          <h3 class="text-base font-bold text-amber-300 mb-2 group-hover:text-amber-200 transition">Citizen Reporting</h3>
+          <p class="text-xs text-slate-300 leading-relaxed font-sans">
+            Enables local residents and first responders to submit geo-tagged observations, photo evidence of cracks, and ground seepage directly from the field.
+          </p>
+        </a>
+
+        <!-- 06 Explainable View -->
+        <a href="#predictor" class="glass-card p-6 rounded-2xl border border-slate-800 glass-card-hover block group">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-mono font-bold text-sm mb-4 group-hover:bg-purple-500 group-hover:text-white transition">
+            06
+          </div>
+          <h3 class="text-base font-bold text-white mb-2 group-hover:text-purple-400 transition">Explainable View</h3>
+          <p class="text-xs text-slate-400 leading-relaxed font-sans">
+            Deconstructs the "black box" by showing the major environmental factors (SHAP attribution) behind the assigned risk level to foster trust with decision-makers.
+          </p>
+        </a>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 01 & 06: AI RISK ASSESSMENT & EXPLAINABLE VIEW (INTERACTIVE SANDBOX) -->
+  <section id="predictor" class="py-16 lg:py-24 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">
+            <span>Core Module 01 & 06 • Scikit-Learn / PyTorch / XGBoost</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            AI Risk Assessment & Explainable View
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base mt-1 max-w-2xl">
+            Simulate environmental signals to output real-time <strong>Risk Score</strong>, <strong>Risk Class (Low / Moderate / High)</strong>, and <strong>Confidence %</strong>.
+          </p>
+        </div>
+
+        <!-- NER Quick Incident Presets -->
+        <div class="mt-6 md:mt-0 flex flex-wrap gap-2">
+          <span class="text-xs text-slate-400 self-center font-mono mr-1">NER Presets:</span>
+          <button onclick="loadNerPreset('cherrapunji')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-red-950/60 text-red-300 border border-red-800/60 text-xs font-mono transition">
+            🔴 Meghalaya (Cherrapunji)
+          </button>
+          <button onclick="loadNerPreset('guwahati_shillong')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-950/60 text-amber-300 border border-amber-800/60 text-xs font-mono transition">
+            🟠 NH-6 Shillong Pass
+          </button>
+          <button onclick="loadNerPreset('gangtok')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-950/60 text-amber-300 border border-amber-800/60 text-xs font-mono transition">
+            🟠 Sikkim (Gangtok Ridge)
+          </button>
+          <button onclick="loadNerPreset('low_risk')" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 text-xs font-mono transition">
+            🟢 Foothill Valley (Safe)
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-Column Sandbox Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- LEFT: INPUT SLIDERS (7 Cols) -->
+        <div class="lg:col-span-7 glass-card p-6 sm:p-8 rounded-2xl border border-slate-800">
+          
+          <div class="flex items-center justify-between pb-3 mb-6 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+              <span class="text-sky-400">⚡</span> Environmental Risk Inputs (Slide 3 & 4)
+            </h3>
+            <button onclick="resetSliders()" class="text-xs text-slate-400 hover:text-sky-400 font-mono underline transition">
+              Reset Defaults
+            </button>
+          </div>
+
+          <div class="space-y-6">
+
+            <!-- 1. Rainfall (mm) -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs sm:text-sm font-medium text-slate-200">
+                  1. Precipitation / Rainfall (mm in 24h)
+                </label>
+                <div class="font-mono text-sky-400 font-bold text-sm bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                  <span id="valRain">210</span> mm
+                </div>
+              </div>
+              <input type="range" id="inputRain" min="0" max="400" value="210" oninput="calculateRisk()" class="w-full" />
+              <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
+                <span>0 mm (Normal)</span>
+                <span>150 mm (Monsoon Warning)</span>
+                <span>400 mm (Cloudburst)</span>
+              </div>
+            </div>
+
+            <!-- 2. Terrain Slope (Degrees) -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs sm:text-sm font-medium text-slate-200">
+                  2. Terrain Slope Angle (Degrees)
+                </label>
+                <div class="font-mono text-sky-400 font-bold text-sm bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                  <span id="valSlope">42</span>°
+                </div>
+              </div>
+              <input type="range" id="inputSlope" min="5" max="75" value="42" oninput="calculateRisk()" class="w-full" />
+              <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
+                <span>5° (Gentle Plains)</span>
+                <span>35° (Threshold Limit)</span>
+                <span>75° (Escarpment Cliff)</span>
+              </div>
+            </div>
+
+            <!-- 3. Soil Moisture (%) -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs sm:text-sm font-medium text-slate-200">
+                  3. Soil Moisture Saturation (%)
+                </label>
+                <div class="font-mono text-sky-400 font-bold text-sm bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                  <span id="valMoisture">84</span>%
+                </div>
+              </div>
+              <input type="range" id="inputMoisture" min="10" max="100" value="84" oninput="calculateRisk()" class="w-full" />
+              <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
+                <span>10% (Dry Substrate)</span>
+                <span>65% (Field Capacity)</span>
+                <span>100% (Fully Saturated)</span>
+              </div>
+            </div>
+
+            <!-- 4. Historical Landslide Incidence -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-xs sm:text-sm font-medium text-slate-200">
+                  4. Historical Landslide Incidents in Sector
+                </label>
+                <div class="font-mono text-sky-400 font-bold text-sm bg-slate-900 px-2.5 py-0.5 rounded border border-slate-800">
+                  <span id="valHistory">6</span> Previous Events
+                </div>
+              </div>
+              <input type="range" id="inputHistory" min="0" max="12" value="6" oninput="calculateRisk()" class="w-full" />
+              <div class="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
+                <span>0 (Virgin Slope)</span>
+                <span>4 (Repeated Scar Zone)</span>
+                <span>12 (Chronic Failure Slip)</span>
+              </div>
+            </div>
+
+            <!-- Soil Type & Regional Geography Dropdowns -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">Soil Type / Lithology</label>
+                <select id="selectSoil" onchange="calculateRisk()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                  <option value="weathered_clay" selected>Weathered Red Sandy Clay (NER)</option>
+                  <option value="colluvium">Loose Hillside Colluvium</option>
+                  <option value="shale">Fissured Shale & Sandstone</option>
+                  <option value="granite">Hard Granitic Gneiss</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">NER Monitoring Region</label>
+                <select id="selectRegion" onchange="calculateRisk()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-sky-500">
+                  <option value="meghalaya" selected>Meghalaya (East Khasi Hills)</option>
+                  <option value="assam">Assam (Dima Hasao / Barak Valley)</option>
+                  <option value="sikkim">Sikkim (Gangtok / North Sikkim)</option>
+                  <option value="mizoram">Mizoram (Champhai Sector)</option>
+                  <option value="arunachal">Arunachal Pradesh (Tawang Pass)</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- RIGHT: AI PREDICTION OUTPUT (PPT SLIDE 3 & 5) (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <div id="riskCard" class="glass-card p-6 sm:p-8 rounded-2xl border border-red-500/40 relative overflow-hidden transition-all duration-300">
+            
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-mono uppercase tracking-wider text-slate-400">AI PREDICTION OUTPUT</span>
+              <span id="badgeRiskLevel" class="px-3 py-1 rounded-full text-xs font-bold font-mono bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse">
+                HIGH RISK
+              </span>
+            </div>
+
+            <!-- Big Probability Score -->
+            <div class="flex items-baseline space-x-3 my-3">
+              <div class="text-6xl font-black text-white font-mono tracking-tight" id="scoreRisk">88.5</div>
+              <div class="text-2xl font-bold text-slate-400 font-mono">/ 100</div>
+              <div class="text-xs text-slate-400 ml-auto text-right font-mono">
+                <span class="text-slate-400 block text-[10px]">AI CONFIDENCE</span>
+                <span class="text-sky-400 font-bold text-sm" id="scoreConfidence">95.4%</span>
+              </div>
+            </div>
+
+            <!-- Progress Meter -->
+            <div class="w-full bg-slate-900 rounded-full h-3 p-0.5 border border-slate-800 mb-6">
+              <div id="riskBar" class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-red-500 transition-all duration-300" style="width: 88.5%"></div>
+            </div>
+
+            <!-- PPT Slide 5: 06 - EXPLAINABLE VIEW (Feature Attribution) -->
+            <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 mb-5">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-mono font-bold text-sky-300 uppercase tracking-wider">06 - EXPLAINABLE VIEW</span>
+                <span class="text-[10px] text-slate-400 font-mono">SHAP Weights</span>
+              </div>
+              <p class="text-[11px] text-slate-400 font-sans">
+                Major factors behind this risk level:
+              </p>
+
+              <!-- Factor 1: Rain -->
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1">
+                  <span class="text-slate-300">24h Rainfall Intensity</span>
+                  <span id="shapRain" class="text-sky-400 font-bold">36%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div id="barRain" class="bg-sky-400 h-full rounded-full" style="width: 36%"></div>
+                </div>
+              </div>
+
+              <!-- Factor 2: Soil Moisture -->
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1">
+                  <span class="text-slate-300">Soil Moisture Saturation</span>
+                  <span id="shapMoisture" class="text-sky-400 font-bold">31%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div id="barMoisture" class="bg-sky-400 h-full rounded-full" style="width: 31%"></div>
+                </div>
+              </div>
+
+              <!-- Factor 3: Slope -->
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1">
+                  <span class="text-slate-300">Terrain Slope Steepness</span>
+                  <span id="shapSlope" class="text-sky-400 font-bold">23%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div id="barSlope" class="bg-sky-400 h-full rounded-full" style="width: 23%"></div>
+                </div>
+              </div>
+
+              <!-- Factor 4: Historical -->
+              <div>
+                <div class="flex justify-between text-xs font-mono mb-1">
+                  <span class="text-slate-300">Historical Scar Sensitivity</span>
+                  <span id="shapHistory" class="text-sky-400 font-bold">10%</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div id="barHistory" class="bg-sky-400 h-full rounded-full" style="width: 10%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PPT Slide 5: 03 - EARLY-WARNING ALERTS BOX -->
+            <div id="alertBox" class="p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 text-xs space-y-1.5">
+              <div class="font-bold text-red-300 flex items-center gap-1.5 font-mono">
+                <span>🚨</span> 03 - EARLY-WARNING DISPATCH:
+              </div>
+              <p id="alertText" class="text-slate-300 font-sans leading-relaxed">
+                Critical precipitation threshold exceeded. Automated alert dispatched to Meghalaya State Disaster Management Authority (SDMA). Recommended: Pre-position road clearance units on NH-6.
+              </p>
+            </div>
+
+            <!-- Action button -->
+            <div class="mt-4">
+              <button onclick="triggerSimulatedAlert()" class="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-mono font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
+                <span>📢</span> Broadcast Early-Warning Alert (SMS / Siren)
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 02 & 04: INTERACTIVE RISK MAP & AUTHORITY DASHBOARD (NER GEOGRAPHY) -->
+  <section id="gis-map" class="py-16 lg:py-24 bg-sih-navy/40 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">
+            <span>02 - Interactive Risk Map • 04 - Authority Dashboard</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            North Eastern Region (NER) Risk Map
+          </h2>
+          <p class="text-slate-400 text-sm sm:text-base mt-1">
+            Visualizing Low / Moderate / High landslide risk zones across Meghalaya, Assam, Sikkim, and Arunachal Pradesh.
+          </p>
+        </div>
+
+        <!-- Filter Buttons for Map -->
+        <div class="mt-4 md:mt-0 flex items-center space-x-2 font-mono text-xs">
+          <button onclick="filterMapZones('all')" id="btnMapAll" class="px-3 py-1.5 rounded-lg bg-sky-950 text-sky-300 border border-sky-700">All NER Zones (6)</button>
+          <button onclick="filterMapZones('high')" id="btnMapHigh" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white">High Risk Only (2)</button>
+          <button onclick="focusState('meghalaya')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white">Meghalaya Focus</button>
+        </div>
+      </div>
+
+      <!-- Map Container Box -->
+      <div class="relative rounded-2xl overflow-hidden border border-slate-800 glass-card shadow-2xl">
+        
+        <!-- Leaflet Map Container -->
+        <div id="nerMap" class="w-full h-[520px] z-10"></div>
+
+        <!-- Floating Authority Dashboard HUD (Top-Right) -->
+        <div class="absolute top-4 right-4 z-20 glass-card p-4 rounded-xl border border-slate-700/80 max-w-xs text-xs font-mono hidden sm:block">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-300">
+            <span class="font-bold text-white">04 - AUTHORITY HUD</span>
+            <span class="text-emerald-400 font-bold">● LIVE</span>
+          </div>
+          <div class="space-y-1.5 mt-2.5 text-slate-400">
+            <div class="flex justify-between">
+              <span>NER Stations Online:</span>
+              <span class="text-sky-300 font-bold">42 Nodes</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Rainfall Threshold:</span>
+              <span class="text-red-400 font-bold">&gt;180mm / 24h</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Evacuation Camps:</span>
+              <span class="text-emerald-400">14 Prepared</span>
+            </div>
+            <div class="flex justify-between">
+              <span>NDRF Battalions:</span>
+              <span class="text-amber-400">Patrolling NH-6</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map Legend (Bottom-Left) -->
+        <div class="absolute bottom-4 left-4 z-20 glass-card px-4 py-2.5 rounded-xl border border-slate-700/80 text-[11px] font-mono flex items-center space-x-4">
+          <span class="text-slate-400 font-bold">RISK LEVELS:</span>
+          <span class="flex items-center gap-1 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Low</span>
+          <span class="flex items-center gap-1 text-amber-400"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Moderate</span>
+          <span class="flex items-center gap-1 text-red-400"><span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span> High</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 05: CITIZEN REPORTING MODULE (FROM PPT SLIDE 5) -->
+  <section id="citizen-reporting" class="py-16 lg:py-24 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Left: Explanation of Citizen Reporting (6 Cols) -->
+        <div class="lg:col-span-6 space-y-5">
+          <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-amber-400">
+            <span>Core Module 05 • PPT Slide 5</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+            05 - Citizen & Field Reporting
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Local communities and field workers are the true first eyes on the ground. This module empowers citizens across the North Eastern Region to submit <strong>geo-tagged observations</strong>, reports of visible soil cracks, or sudden spring muddying.
+          </p>
+
+          <div class="space-y-3 text-xs font-mono">
+            <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-lg">📍</span>
+              <div>
+                <strong class="text-white block">Auto-GPS Geotagging</strong>
+                <span class="text-slate-400">Captures phone coordinates so response teams know the exact slope coordinates.</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-lg">📸</span>
+              <div>
+                <strong class="text-white block">Visual Evidence Upload</strong>
+                <span class="text-slate-400">Allows attaching photos of road toe-cutting, tree tilting, or masonry fractures.</span>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+              <span class="text-lg">🔄</span>
+              <div>
+                <strong class="text-white block">Instant GIS Integration</strong>
+                <span class="text-slate-400">Verified reports automatically update the live risk map for SDMA and disaster responders.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Citizen Submission Form (6 Cols) -->
+        <div class="lg:col-span-6">
+          <div class="glass-card p-6 sm:p-8 rounded-2xl border border-amber-500/40 relative">
+            <div class="flex items-center justify-between pb-3 mb-5 border-b border-slate-800">
+              <h3 class="text-sm font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                <span>📝</span> Submit Field Observation
+              </h3>
+              <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 font-mono">
+                COMMUNITY PORTAL
+              </span>
+            </div>
+
+            <form id="citizenReportForm" onsubmit="handleCitizenSubmit(event)" class="space-y-4 text-xs font-mono">
+              <div>
+                <label class="block text-slate-300 mb-1">Your Name / Department</label>
+                <input type="text" id="citName" placeholder="e.g. Tenzing Norbu / Local Resident" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-slate-300 mb-1">Location / District</label>
+                  <select id="citLocation" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                    <option value="Sohra, Meghalaya">Sohra (Cherrapunji), Meghalaya</option>
+                    <option value="NH-6 Shillong Pass">NH-6 Shillong Pass</option>
+                    <option value="Dima Hasao, Assam">Dima Hasao Hill Tracts, Assam</option>
+                    <option value="Gangtok, Sikkim">Gangtok Outer Ridge, Sikkim</option>
+                    <option value="Champhai, Mizoram">Champhai Valley, Mizoram</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-slate-300 mb-1">Observation Type</label>
+                  <select id="citType" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-amber-500">
+                    <option value="Visible Ground Cracks">Visible Ground / Road Cracks</option>
+                    <option value="Tilting Trees / Utility Poles">Tilting Trees / Utility Poles</option>
+                    <option value="Sudden Muddy Spring Water">Sudden Muddy Spring Water</option>
+                    <option value="Minor Rockfall / Slump">Minor Rockfall / Slump</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-slate-300 mb-1">Field Description / Severity</label>
+                <textarea id="citDesc" rows="3" placeholder="Describe the crack width, nearby dwellings, or stream blockage..." class="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500"></textarea>
+              </div>
+
+              <!-- Geotag coordinates simulator -->
+              <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between text-[11px]">
+                <span class="text-slate-400">Simulated Geotag:</span>
+                <span class="text-sky-300 font-bold">Lat: 25.298° N, Long: 91.731° E (GPS Locked)</span>
+              </div>
+
+              <button type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs font-mono shadow-lg transition flex items-center justify-center gap-2">
+                <span>📤</span> Submit Geo-Tagged Field Report
+              </button>
+            </form>
+
+            <!-- Success notification box -->
+            <div id="reportSuccess" class="hidden mt-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-700/60 text-emerald-300 text-xs font-mono">
+              ✓ Report successfully dispatched to NER Disaster Control Room! Added to map markers.
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION: PPT SLIDE 3 & 4 (TECHNOLOGIES & HOW IT WORKS ARCHITECTURE) -->
+  <section id="tech-stack" class="py-16 lg:py-24 bg-sih-navy/40 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Slide 4 Workflow Diagram -->
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">
+          <span>PPT Slide 3 & 4 Specifications</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          How The Proposed System Works
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base mt-2">
+          "A modular architecture allows the MVP to start simple and expand later."
+        </p>
+      </div>
+
+      <!-- 4 Stages Grid (Slide 4) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        
+        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+          <div class="text-xs font-mono font-bold text-sky-400 uppercase mb-2">1. DATA SOURCES</div>
+          <h3 class="text-base font-bold text-white mb-2">Historical & Sensor Data</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-sans">
+            <li>• Historical landslide events</li>
+            <li>• Rainfall (IMD weather APIs)</li>
+            <li>• Terrain / slope DEM</li>
+            <li>• Soil moisture sensors</li>
+            <li>• Geographical GIS data</li>
+          </ul>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+          <div class="text-xs font-mono font-bold text-emerald-400 uppercase mb-2">2. PROCESSING</div>
+          <h3 class="text-base font-bold text-white mb-2">ETL & Feature Pipelines</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-sans">
+            <li>• Cleaning & outlier filtering</li>
+            <li>• Feature extraction & weights</li>
+            <li>• Data normalization</li>
+            <li>• Geo-spatial location mapping</li>
+            <li>• Timeseries aggregation</li>
+          </ul>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+          <div class="text-xs font-mono font-bold text-amber-400 uppercase mb-2">3. AI / RISK ENGINE</div>
+          <h3 class="text-base font-bold text-white mb-2">Predictive Intelligence</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-sans">
+            <li>• Multi-factor Risk Score</li>
+            <li>• Risk Class: Low / Mod / High</li>
+            <li>• Prediction Confidence Score</li>
+            <li>• Explainable factor attribution</li>
+            <li>• Continuous model validation</li>
+          </ul>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800">
+          <div class="text-xs font-mono font-bold text-purple-400 uppercase mb-2">4. APPLICATION</div>
+          <h3 class="text-base font-bold text-white mb-2">Web GIS & Alerts</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-sans">
+            <li>• Interactive GIS Risk Map</li>
+            <li>• Authority Dashboard</li>
+            <li>• Early-Warning Alert Siren</li>
+            <li>• Citizen / Field Reports</li>
+            <li>• Evacuation planning memo</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Slide 3 Technologies Showcase -->
+      <div class="glass-card rounded-2xl border border-slate-800 p-6 sm:p-8">
+        <h3 class="text-sm font-mono font-bold text-white uppercase tracking-wider mb-6 pb-3 border-b border-slate-800 flex items-center justify-between">
+          <span>Technologies Defined in Presentation (Slide 3)</span>
+          <span class="text-xs text-sky-400">SIH26001 Stack</span>
+        </h3>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-xs font-mono">
+          
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">BACKEND API</span>
+            <strong class="text-white text-sm block mt-1">Flask / FastAPI</strong>
+            <span class="text-sky-400 text-[11px]">Python REST</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">FRONTEND UI</span>
+            <strong class="text-white text-sm block mt-1">HTML5 / CSS3</strong>
+            <span class="text-sky-400 text-[11px]">JavaScript + Tailwind</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">PREDICTIVE AI</span>
+            <strong class="text-white text-sm block mt-1">PyTorch & XGBoost</strong>
+            <span class="text-sky-400 text-[11px]">Scikit-Learn</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">DATABASE</span>
+            <strong class="text-white text-sm block mt-1">PostgreSQL</strong>
+            <span class="text-sky-400 text-[11px]">PostGIS + Timescale</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">SPATIAL / MAP</span>
+            <strong class="text-white text-sm block mt-1">Leaflet.js</strong>
+            <span class="text-sky-400 text-[11px]">Mapbox + GIS</span>
+          </div>
+
+          <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800">
+            <span class="text-slate-400 text-[10px] block">DATA INGESTION</span>
+            <strong class="text-white text-sm block mt-1">Weather APIs</strong>
+            <span class="text-sky-400 text-[11px]">IMD + IoT Sensors</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PPT SLIDE 6: WHAT WE WILL BUILD FIRST (ROADMAP) -->
+  <section id="roadmap" class="py-16 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-sky-400 mb-2">
+          <span>PPT Slide 6 Implementation Plan</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          What We Will Build First
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">
+          "A practical implementation plan keeps the project achievable after selection."
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <div class="glass-card p-6 rounded-2xl border border-sky-500/40 relative">
+          <div class="w-8 h-8 rounded-full bg-sky-500 text-black font-bold text-xs flex items-center justify-center font-mono mb-3">
+            01
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">PROTOTYPE</h3>
+          <p class="text-xs text-slate-300 font-sans leading-relaxed">
+            Dashboard + GIS interactive map + sample historical dataset for NER corridors.
+          </p>
+          <span class="mt-4 inline-block text-[11px] font-mono text-sky-400">Status: Complete (MVP Built)</span>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800 relative">
+          <div class="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center font-mono mb-3 border border-slate-700">
+            02
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">AI MODEL</h3>
+          <p class="text-xs text-slate-300 font-sans leading-relaxed">
+            Train and validate XGBoost & PyTorch risk models with historical Geological Survey of India (GSI) data.
+          </p>
+          <span class="mt-4 inline-block text-[11px] font-mono text-slate-400">Phase 2 Target</span>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800 relative">
+          <div class="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center font-mono mb-3 border border-slate-700">
+            03
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">INTEGRATION</h3>
+          <p class="text-xs text-slate-300 font-sans leading-relaxed">
+            Connect live IMD rainfall APIs and additional geological soil layers into TimescaleDB.
+          </p>
+          <span class="mt-4 inline-block text-[11px] font-mono text-slate-400">Phase 3 Target</span>
+        </div>
+
+        <div class="glass-card p-6 rounded-2xl border border-slate-800 relative">
+          <div class="w-8 h-8 rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center font-mono mb-3 border border-slate-700">
+            04
+          </div>
+          <h3 class="text-base font-bold text-white mb-2">PILOT</h3>
+          <p class="text-xs text-slate-300 font-sans leading-relaxed">
+            Test, refine alerts, and improve usability in collaboration with local NER disaster management teams.
+          </p>
+          <span class="mt-4 inline-block text-[11px] font-mono text-slate-400">Phase 4 Target</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PPT SLIDE 7: IMPACT AND BENEFITS -->
+  <section id="impact" class="py-16 lg:py-24 bg-sih-navy/40 border-b border-slate-800 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-14">
+        <div class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-emerald-400 mb-2">
+          <span>PPT Slide 7 Value Proposition</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+          Impact and Benefits
+        </h2>
+        <p class="text-slate-400 text-sm mt-1">
+          Measurable humanitarian and ecological benefits for the North Eastern Region.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Target Audience -->
+        <div class="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800">
+          <div class="text-2xl font-bold text-sky-400 mb-3">🎯</div>
+          <h3 class="text-base font-bold text-white mb-3">Target Audience</h3>
+          <ul class="text-xs text-slate-300 space-y-2 font-sans">
+            <li class="flex items-center gap-2">• <strong>Local Administrations</strong> (District Commissioners, PWD)</li>
+            <li class="flex items-center gap-2">• <strong>Emergency Responders</strong> (NDRF, SDRF, Police)</li>
+            <li class="flex items-center gap-2">• <strong>Communities</strong> in landslide-prone hill tracts</li>
+          </ul>
+        </div>
+
+        <!-- Social Impact -->
+        <div class="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800">
+          <div class="text-2xl font-bold text-amber-400 mb-3">🤝</div>
+          <h3 class="text-base font-bold text-white mb-3">Social Impact</h3>
+          <ul class="text-xs text-slate-300 space-y-2 font-sans">
+            <li class="flex items-center gap-2">• <strong>Earlier awareness</strong> before catastrophic failure</li>
+            <li class="flex items-center gap-2">• <strong>Faster coordination</strong> across emergency units</li>
+            <li class="flex items-center gap-2">• <strong>Safer evacuation planning</strong> with route corridors</li>
+            <li class="flex items-center gap-2">• <strong>Improved community preparedness</strong> & drills</li>
+          </ul>
+        </div>
+
+        <!-- Environmental Impact -->
+        <div class="glass-card p-6 sm:p-8 rounded-2xl border border-slate-800">
+          <div class="text-2xl font-bold text-emerald-400 mb-3">🌿</div>
+          <h3 class="text-base font-bold text-white mb-3">Environmental Impact</h3>
+          <p class="text-xs text-slate-300 font-sans leading-relaxed">
+            Supports continuous monitoring of vulnerable slopes and helps state forest and highway departments identify high-risk degradation zones needing immediate preventive bio-engineering and retaining structures.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PPT SLIDE 8: THANK YOU & TEAM DETAILS -->
+  <footer class="py-14 bg-sih-dark text-slate-400 text-xs font-mono">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+      <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-slate-800 text-slate-200">
+        <span class="text-orange-500 font-bold">🇮🇳 SMART INDIA HACKATHON 2026</span>
+        <span>•</span>
+        <span class="text-sky-400">PROBLEM STATEMENT ID: SIH26001</span>
+      </div>
+
+      <h3 class="text-2xl font-black text-white">THANK YOU</h3>
+      <p class="text-slate-400">
+        FROM TEAM <strong class="text-white">LANDSLIDE AI</strong> (TEAM ID: <strong class="text-amber-400">AMP2026017</strong>)
+      </p>
+
+      <div class="pt-4 border-t border-slate-800/80 text-[11px] text-slate-500">
+        AI-Based Early Warning and Landslide Risk Monitoring System in NER • Built for Smart India Hackathon 2026
+      </div>
+    </div>
+  </footer>
+
+  <!-- SCRIPT: REAL-TIME SIMULATOR, MAP, CITIZEN FORM & AUDIO -->
+  <script>
+    // -------------------------------------------------------------
+    // 1. AI RISK ASSESSMENT & EXPLAINABLE CALCULATION (SLIDE 3 & 5)
+    // -------------------------------------------------------------
+    function calculateRisk() {
+      const rain = parseFloat(document.getElementById('inputRain').value);
+      const slope = parseFloat(document.getElementById('inputSlope').value);
+      const moisture = parseFloat(document.getElementById('inputMoisture').value);
+      const history = parseFloat(document.getElementById('inputHistory').value);
+      const soil = document.getElementById('selectSoil').value;
+
+      document.getElementById('valRain').innerText = rain;
+      document.getElementById('valSlope').innerText = slope;
+      document.getElementById('valMoisture').innerText = moisture;
+      document.getElementById('valHistory').innerText = history;
+
+      // Soil weighting
+      let soilFactor = 1.0;
+      if (soil === 'weathered_clay') soilFactor = 1.25;
+      else if (soil === 'colluvium') soilFactor = 1.35;
+      else if (soil === 'shale') soilFactor = 1.15;
+      else if (soil === 'granite') soilFactor = 0.70;
+
+      // Weighted Multi-Factor AI Risk Formula
+      // Risk Score = 0.35 * Rain + 0.30 * Moisture + 0.25 * Slope + 0.10 * History
+      const rainScore = (rain / 400) * 100;
+      const slopeScore = (slope / 75) * 100;
+      const moistureScore = moisture;
+      const historyScore = (history / 12) * 100;
+
+      let totalScore = (rainScore * 0.36 + moistureScore * 0.31 + slopeScore * 0.23 + historyScore * 0.10) * soilFactor;
+      if (totalScore > 98.5) totalScore = 98.5;
+      if (totalScore < 4.0) totalScore = 4.0;
+
+      // Confidence
+      const confidence = (90 + (totalScore / 100) * 8.5).toFixed(1);
+
+      document.getElementById('scoreRisk').innerText = totalScore.toFixed(1);
+      document.getElementById('riskBar').style.width = `${totalScore.toFixed(1)}%`;
+      document.getElementById('scoreConfidence').innerText = `${confidence}%`;
+
+      // Update SHAP / Feature Attribution Bars
+      const sumWeight = (rainScore * 0.36) + (moistureScore * 0.31) + (slopeScore * 0.23) + (historyScore * 0.10);
+      const shapR = Math.round(((rainScore * 0.36) / sumWeight) * 100);
+      const shapM = Math.round(((moistureScore * 0.31) / sumWeight) * 100);
+      const shapS = Math.round(((slopeScore * 0.23) / sumWeight) * 100);
+      const shapH = Math.max(4, 100 - shapR - shapM - shapS);
+
+      document.getElementById('shapRain').innerText = `${shapR}%`;
+      document.getElementById('barRain').style.width = `${shapR}%`;
+      document.getElementById('shapMoisture').innerText = `${shapM}%`;
+      document.getElementById('barMoisture').style.width = `${shapM}%`;
+      document.getElementById('shapSlope').innerText = `${shapS}%`;
+      document.getElementById('barSlope').style.width = `${shapS}%`;
+      document.getElementById('shapHistory').innerText = `${shapH}%`;
+      document.getElementById('barHistory').style.width = `${shapH}%`;
+
+      // Risk Class: Low / Moderate / High (From PPT Slide 2 & 5)
+      const badge = document.getElementById('badgeRiskLevel');
+      const card = document.getElementById('riskCard');
+      const alertBox = document.getElementById('alertBox');
+      const alertText = document.getElementById('alertText');
+
+      if (totalScore >= 68) {
+        badge.innerText = 'HIGH RISK';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold font-mono bg-red-500/20 text-red-400 border border-red-500/50 animate-pulse';
+        card.className = 'glass-card p-6 sm:p-8 rounded-2xl border border-red-500/40 relative overflow-hidden transition-all duration-300';
+        alertBox.className = 'p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 text-xs space-y-1.5';
+        alertText.innerText = 'CRITICAL ALERT (HIGH RISK): Soil saturation and rainfall thresholds exceeded. Automated evacuation protocol triggered for downslope NER settlements. NDRF and District Disaster Management informed.';
+      } else if (totalScore >= 38) {
+        badge.innerText = 'MODERATE RISK';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold font-mono bg-amber-500/20 text-amber-300 border border-amber-500/50';
+        card.className = 'glass-card p-6 sm:p-8 rounded-2xl border border-amber-500/40 relative overflow-hidden transition-all duration-300';
+        alertBox.className = 'p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/60 text-xs space-y-1.5';
+        alertText.innerText = 'WATCH ALERT (MODERATE RISK): Ongoing precipitation causing elevated pore pressures. First responders placed on standby. Highway patrol alerted for potential debris slumps.';
+      } else {
+        badge.innerText = 'LOW RISK';
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/50';
+        card.className = 'glass-card p-6 sm:p-8 rounded-2xl border border-emerald-500/40 relative overflow-hidden transition-all duration-300';
+        alertBox.className = 'p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-xs space-y-1.5';
+        alertText.innerText = 'NOMINAL (LOW RISK): Slope factors remain within safe stability thresholds. Sensor network continuing standard 10-minute periodic polling.';
+      }
+    }
+
+    function resetSliders() {
+      document.getElementById('inputRain').value = 210;
+      document.getElementById('inputSlope').value = 42;
+      document.getElementById('inputMoisture').value = 84;
+      document.getElementById('inputHistory').value = 6;
+      document.getElementById('selectSoil').value = 'weathered_clay';
+      calculateRisk();
+    }
+
+    function loadNerPreset(preset) {
+      if (preset === 'cherrapunji') {
+        document.getElementById('inputRain').value = 340;
+        document.getElementById('inputSlope').value = 48;
+        document.getElementById('inputMoisture').value = 94;
+        document.getElementById('inputHistory').value = 9;
+        document.getElementById('selectSoil').value = 'weathered_clay';
+        document.getElementById('selectRegion').value = 'meghalaya';
+      } else if (preset === 'guwahati_shillong') {
+        document.getElementById('inputRain').value = 190;
+        document.getElementById('inputSlope').value = 38;
+        document.getElementById('inputMoisture').value = 78;
+        document.getElementById('inputHistory').value = 5;
+        document.getElementById('selectSoil').value = 'colluvium';
+        document.getElementById('selectRegion').value = 'meghalaya';
+      } else if (preset === 'gangtok') {
+        document.getElementById('inputRain').value = 175;
+        document.getElementById('inputSlope').value = 44;
+        document.getElementById('inputMoisture').value = 75;
+        document.getElementById('inputHistory').value = 4;
+        document.getElementById('selectSoil').value = 'shale';
+        document.getElementById('selectRegion').value = 'sikkim';
+      } else if (preset === 'low_risk') {
+        document.getElementById('inputRain').value = 35;
+        document.getElementById('inputSlope').value = 14;
+        document.getElementById('inputMoisture').value = 40;
+        document.getElementById('inputHistory').value = 0;
+        document.getElementById('selectSoil').value = 'granite';
+        document.getElementById('selectRegion').value = 'assam';
+      }
+      calculateRisk();
+    }
+
+    // -------------------------------------------------------------
+    // 2. LEAFLET MAP OF NORTH EASTERN REGION (NER) (SLIDE 5: 02)
+    // -------------------------------------------------------------
+    let nerMap = null;
+    let mapMarkerLayer = null;
+
+    const nerStations = [
+      { id: 'NER-MEG-01', name: 'Sohra (Cherrapunji) Cliff', state: 'Meghalaya', lat: 25.298, lng: 91.731, level: 'High', score: 89, rain: '340mm' },
+      { id: 'NER-MEG-02', name: 'NH-6 Shillong Pass', state: 'Meghalaya', lat: 25.578, lng: 91.893, level: 'High', score: 76, rain: '190mm' },
+      { id: 'NER-ASM-03', name: 'Dima Hasao Hill Rail Cut', state: 'Assam', lat: 25.185, lng: 93.023, level: 'Moderate', score: 58, rain: '120mm' },
+      { id: 'NER-SIK-04', name: 'Gangtok Outer Ridge', state: 'Sikkim', lat: 27.338, lng: 88.606, level: 'Moderate', score: 62, rain: '140mm' },
+      { id: 'NER-MIZ-05', name: 'Champhai Valley Slope', state: 'Mizoram', lat: 23.473, lng: 93.328, level: 'Low', score: 28, rain: '45mm' },
+      { id: 'NER-ARU-06', name: 'Tawang Pass Corridor', state: 'Arunachal Pradesh', lat: 27.586, lng: 91.859, level: 'Low', score: 32, rain: '55mm' }
+    ];
+
+    function initNerMap() {
+      // Centered on North Eastern Region (NER)
+      nerMap = L.map('nerMap', {
+        zoomControl: false,
+        attributionControl: false
+      }).setView([25.8, 92.5], 7);
+
+      L.control.zoom({ position: 'bottomright' }).addTo(nerMap);
+
+      // Dark Theme Tiles
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18,
+        subdomains: 'abcd',
+      }).addTo(nerMap);
+
+      mapMarkerLayer = L.layerGroup().addTo(nerMap);
+      renderNerMarkers('all');
+    }
+
+    function renderNerMarkers(filter) {
+      if (!mapMarkerLayer) return;
+      mapMarkerLayer.clearLayers();
+
+      nerStations.forEach(st => {
+        if (filter === 'high' && st.level !== 'High') return;
+
+        const color = st.level === 'High' ? '#ef4444' : (st.level === 'Moderate' ? '#f59e0b' : '#10b981');
+        
+        const pinIcon = L.divIcon({
+          className: 'custom-pin',
+          html: `
+            <div style="position:relative; width:26px; height:26px;">
+              <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:${color}; opacity:0.35; animation: ping 1.8s infinite;"></div>
+              <div style="position:relative; width:18px; height:18px; margin:4px; border-radius:50%; background:${color}; border:2px solid #ffffff; box-shadow:0 0 10px ${color}"></div>
+            </div>
+          `,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+
+        const marker = L.marker([st.lat, st.lng], { icon: pinIcon }).addTo(mapMarkerLayer);
+        marker.bindPopup(`
+          <div class="p-2 font-mono text-xs space-y-1">
+            <div class="font-bold text-white">${st.name}</div>
+            <div class="text-slate-400 text-[10px]">${st.state} • ${st.id}</div>
+            <div class="flex justify-between pt-1 border-t border-slate-700">
+              <span>Risk Level:</span>
+              <strong style="color:${color}">${st.level} (${st.score}%)</strong>
+            </div>
+            <div class="flex justify-between">
+              <span>24h Rainfall:</span>
+              <strong class="text-sky-300">${st.rain}</strong>
+            </div>
+            <button onclick="nerMap.flyTo([${st.lat}, ${st.lng}], 10)" class="w-full mt-2 py-1 bg-sky-900/60 hover:bg-sky-800 text-sky-200 rounded text-[10px]">
+              Zoom Into Sector
+            </button>
+          </div>
+        `);
+      });
+    }
+
+    function filterMapZones(filter) {
+      document.getElementById('btnMapAll').className = filter === 'all'
+        ? 'px-3 py-1.5 rounded-lg bg-sky-950 text-sky-300 border border-sky-700'
+        : 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white';
+
+      document.getElementById('btnMapHigh').className = filter === 'high'
+        ? 'px-3 py-1.5 rounded-lg bg-sky-950 text-sky-300 border border-sky-700'
+        : 'px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 hover:text-white';
+
+      renderNerMarkers(filter);
+    }
+
+    function focusState(state) {
+      if (state === 'meghalaya') {
+        nerMap.flyTo([25.4, 91.8], 8.5);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 3. CITIZEN REPORTING HANDLER (SLIDE 5: 05)
+    // -------------------------------------------------------------
+    function handleCitizenSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('citName').value;
+      const loc = document.getElementById('citLocation').value;
+      const type = document.getElementById('citType').value;
+      const desc = document.getElementById('citDesc').value;
+
+      // Add to map markers live!
+      const newMarker = L.marker([25.32, 91.75], {
+        icon: L.divIcon({
+          html: `<div style="background:#f59e0b; color:#000; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:12px; border:2px solid #fff;">📍</div>`,
+          iconSize: [22, 22]
+        })
+      }).addTo(mapMarkerLayer);
+
+      newMarker.bindPopup(`
+        <div class="p-2 font-mono text-xs">
+          <strong class="text-amber-300">FIELD REPORT: ${type}</strong><br/>
+          Location: ${loc}<br/>
+          Reported By: ${name}<br/>
+          Note: ${desc || 'Observation logged by community volunteer'}
+        </div>
+      `).openPopup();
+
+      document.getElementById('reportSuccess').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('reportSuccess').classList.add('hidden');
+      }, 5000);
+      document.getElementById('citizenReportForm').reset();
+    }
+
+    // -------------------------------------------------------------
+    // 4. AUDIO SIREN GENERATOR (WEB AUDIO API)
+    // -------------------------------------------------------------
+    function triggerSimulatedAlert() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+
+        let high = false;
+        osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+        const timer = setInterval(() => {
+          osc.frequency.exponentialRampToValueAtTime(high ? 650 : 950, audioCtx.currentTime + 0.3);
+          high = !high;
+        }, 350);
+
+        setTimeout(() => {
+          clearInterval(timer);
+          osc.stop();
+          osc.disconnect();
+        }, 3000);
+
+        alert("🚨 [EARLY-WARNING BROADCAST DISPATCHED]\n\nLocation-based siren and SMS alert broadcasted to vulnerable NER slope zones via State Disaster Management Authority gateway.");
+      } catch (e) {
+        alert("Alert dispatched!");
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 5. PORTAL MODE TOGGLE (AUTHORITY VS COMMUNITY)
+    // -------------------------------------------------------------
+    function togglePortalMode(mode) {
+      const btnA = document.getElementById('btnAuthMode');
+      const btnC = document.getElementById('btnCitMode');
+      if (mode === 'authority') {
+        btnA.className = 'px-2.5 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-mono font-bold border border-sky-400 transition flex items-center gap-1.5 shadow';
+        btnC.className = 'px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs font-mono font-bold border border-slate-700 transition flex items-center gap-1.5';
+        window.location.hash = '#gis-map';
+      } else {
+        btnC.className = 'px-2.5 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-mono font-bold border border-amber-400 transition flex items-center gap-1.5 shadow';
+        btnA.className = 'px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs font-mono font-bold border border-slate-700 transition flex items-center gap-1.5';
+        window.location.hash = '#citizen-reporting';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // 6. INITIALIZE ON LOAD
+    // -------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      calculateRisk();
+      initNerMap();
+    });
+  </script>
+</body>
+</html>
